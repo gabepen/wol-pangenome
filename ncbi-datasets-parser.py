@@ -8,9 +8,11 @@ def filter_genomes(jsonl_file) -> list:
     ''' parses a ncbi-datasets jsonl file to select accessions for 
         a diverse set of Wolbachia strains
         
-        Arguments:  jsonl_file: str, path to jsonl file containing genome data
+        Arguments:  
+            jsonl_file: str, path to jsonl file containing genome data
         
-        Returns: list of strain names and accession numbers  
+        Returns: 
+            list of strain names and accession numbers  
         
     '''
     
