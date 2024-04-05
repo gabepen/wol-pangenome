@@ -20,7 +20,7 @@ def generate_cactus_input(accession_file, newick_file, genome_dir, output_file='
     
     # read in newick file
     with open(newick_file) as f:
-        newick = f.readline()
+        newick = f.readline().strip() + '\n'
         
     # create cactus input file
     with open(output_file, 'w') as f:
