@@ -154,10 +154,5 @@ def main():
     # merge all 16S rRNA sequences into a single file
     merge_result_files(output_dir, args.acc_list)
     
-
-
-      
-
-
 if __name__ == '__main__':
     main()
