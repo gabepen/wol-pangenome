@@ -39,7 +39,7 @@ def filter_genomes(jsonl_file) -> list:
                 # add accession number to set
                 # adjust logic below to only consider strain if the accession number is not in the set
             
-            #This is the set that is going to have the unique accessions
+            #This is the set that is going to have the unique accessions.
             unique_accessions = set()
 
             #Input: "GCF_0001.0", "GCA_0001.0" then the output is going to be "00010". I originally wanted it to look like
