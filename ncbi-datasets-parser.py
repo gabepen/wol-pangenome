@@ -18,7 +18,7 @@ def filter_genomes(jsonl_file) -> list:
     
     strain_count_dict = {}
     filtered_list = []
-    accesions = set() 
+    accessions = set() 
     
     # parse jsonl file where each line is a json object 
     with open(jsonl_file, 'r') as f:
@@ -28,23 +28,25 @@ def filter_genomes(jsonl_file) -> list:
           
             # identify the strain name and accession number 
             accession_ID = genome_dict['accession']
-            accesion_num = genome_dict['accession'].split('_')[-1] # removing the GenBank or RefSeq prefix
+            accession_num = genome_dict['accession'].split('_')[-1] # removing the GenBank or RefSeq prefix
 
             # check for strain
             strain = genome_dict['organism']['organismName']
             taxid = genome_dict['organism']['taxId']
             
-            # check total count for strain and add to output list if under 2
-            # TODO: no duplicate accession numbers  (one from RefSeq, one from GenBank)
-                # add accession number to set
-                # adjust logic below to only consider strain if the accession number is not in the set 
-            if strain in strain_count_dict:
-                if strain_count_dict[strain] < 2:
-                    filtered_list.append((strain, accesion_ID, taxid))
-                strain_count_dict[strain] += 1
-            else:
-                filtered_list.append((strain, accesion_ID, taxid))
-                strain_count_dict[strain] = 1
+            # add strains to filtered list 
+            
+            # no duplicate accession numbers  (one from RefSeq, one from GenBank)
+            if accession_num not in accessions:
+                accessions.add(accession_num)
+                # check total count for strain and add to output list if under 2
+                if strain in strain_count_dict:
+                    if strain_count_dict[strain] < 2:
+                        filtered_list.append((strain, accession_ID, taxid))
+                    strain_count_dict[strain] += 1
+                else:
+                    filtered_list.append((strain, accession_ID, taxid))
+                    strain_count_dict[strain] = 1
                 
     return filtered_list
 

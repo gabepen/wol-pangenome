@@ -29,6 +29,32 @@ def binarize_tree(tree_path, node):
     output_path = tree_path.replace('.fa.treefile', '_binarized.newick')
     tree.write(format=2, outfile=output_path)
 
+def root_tree(tree_path, node):
+    
+    """
+    Roots a tree at a specified node.
+
+    Args:
+        tree_path (str): The path to the input tree file in Newick format.
+        node (str): The label of the target node to root the tree at.
+
+    Returns:
+        None
+
+    Raises:
+        IndexError: If the target node is not found in the tree.
+
+    """
+    tree = Tree(tree_path)
+
+    node_to_root = tree.search_nodes(name=node)[0]
+
+    # Root the tree at the target node
+    tree.set_outgroup(node_to_root)
+
+    # Output the rooted tree to a new newick file
+    output_path = tree_path.replace('.fa.treefile', '_rooted.newick')
+    tree.write(format=2, outfile=output_path)
 
 def main():
     # Parse command line arguments
@@ -37,7 +63,8 @@ def main():
     parser.add_argument('-n', "--node_name", help="Name of the node to binarize")
     args = parser.parse_args()
 
-    binarize_tree(args.tree_path, args.node_name)
+    #binarize_tree(args.tree_path, args.node_name)
+    root_tree(args.tree_path, args.node_name)
 
 if __name__ == "__main__":
     main()

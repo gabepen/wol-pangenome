@@ -63,7 +63,7 @@ def predict_rrna_seq(fasta_file, output_path):
   subprocess.call(['barrnap', '-k', 'bac', '--threads', '20', '-o', output_path + '/output_rrna.fna'], 
                   stdin=open(fasta_file, 'r'), stdout=open(output_path + '/output_rrna.gff', 'w'), stderr=open('/dev/null', 'w'))
   
-def merge_result_files(output_dir, acc_list):
+def merge_result_files(output_dir, acc_list, batch_prefix):
   
   '''
   Merge extracted sequences into a single file adding genome accession to fasta header
@@ -80,7 +80,7 @@ def merge_result_files(output_dir, acc_list):
   with open(acc_list) as f:
     acc_list = [l.strip().split()[0] for l in f.readlines()]
   
-  with open(output_dir + '/all_16S.fasta', 'w') as out_f:
+  with open(output_dir + '/' + batch_prefix + '.fasta', 'w') as out_f:
     for acc_num in acc_list:
       genome_folder = os.path.join(output_dir, acc_num)
       rrna_file = glob(genome_folder + '/*.fna')
@@ -152,7 +152,8 @@ def main():
         continue
       
     # merge all 16S rRNA sequences into a single file
-    merge_result_files(output_dir, args.acc_list)
+    batch_prefix = args.acc_list.split('/')[-1].split('.')[0]
+    merge_result_files(output_dir, args.acc_list, batch_prefix)
     
 if __name__ == '__main__':
     main()

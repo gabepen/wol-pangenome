@@ -1,5 +1,6 @@
 import argparse
 from glob import glob
+from tqdm import tqdm
 
 def generate_cactus_input(accession_file, newick_file, genome_dir, output_file='cactus_input.txt'):
     
@@ -25,8 +26,12 @@ def generate_cactus_input(accession_file, newick_file, genome_dir, output_file='
     # create cactus input file
     with open(output_file, 'w') as f:
         f.write(newick)
-        for acc in acc_list:
-            fasta_path = glob(f'{genome_dir}/{acc}/*.fna')[0]
+        for acc in tqdm(acc_list):
+            try:
+                fasta_path = glob(f'{genome_dir}/{acc}/*.fna')[0]
+            except IndexError:
+                print(f'Genome not found: {acc}')
+                input()
             f.write(f'{acc}\t{fasta_path}\n')
     
 
