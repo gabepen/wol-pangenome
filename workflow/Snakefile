@@ -1,0 +1,110 @@
+configfile: "config/config.yaml"
+
+prefix = config["prefix"]
+genome_dir="data/genomes/" + config["prefix"] + "/ncbi_dataset/data/"
+
+sizes = []
+with open(config["size_list"], 'r') as file:
+    for line in file:
+        sizes.append(line.strip())
+
+# Define the target rule
+rule all:
+    input:
+        expand("results/{prefix}_{size}.pg",  prefix=config["prefix"], size=sizes)
+
+rule extract_genomes:
+    input:
+        genome_dataset=config['ncbi_dataset']
+    output:
+        "data/genomes/{prefix}/ncbi_dataset/data/assembly_data_report.jsonl"
+    params:
+        output_dir="data/genomes/{prefix}"
+    shell:
+        '''
+        unzip {input.genome_dataset} -d {params.output_dir}
+        '''
+
+rule parse_dataset:
+    input:
+        rules.extract_genomes.output,
+    output:
+        "output/accessions/{prefix}_{size}_accessions.txt"
+    shell:
+        'python scripts/ncbi-datasets-parser.py -f {input} -o {output} -n {wildcards.size}'
+
+rule extract_gene_seqs:
+    input:
+        "output/accessions/{prefix}_{size}_accessions.txt"
+    output:
+        "output/16S_fastas/{prefix}_{size}_16S/{prefix}_{size}_16S.fasta"
+    params:
+        output_dir="output/16S_fastas/{prefix}_{size}_16S/"
+    shell:
+        'python scripts/extract-gene-seqs.py -l {input} -o {params.output_dir} -g {genome_dir}'
+
+rule mafft_align:
+    input:
+        "output/16S_fastas/{prefix}_{size}_16S/{prefix}_{size}_16S.fasta"
+    output:
+        "output/16S_alignments/{prefix}_{size}_16S_aligned.fasta"
+    shell:
+        '''
+        mafft --auto {input} > {output}
+        '''
+
+rule iqtree:
+    input:
+        "output/16S_alignments/{prefix}_{size}_16S_aligned.fasta"
+    output:
+        "output/16S_trees/{prefix}_{size}_16S.treefile"
+    shell:
+        '''
+        iqtree -s {input} -pre "output/16S_trees/{prefix}_{wildcards.size}_16S" --quiet
+        '''
+
+rule root_tree:
+    input:
+       "output/16S_trees/{prefix}_{size}_16S.treefile"
+    output:
+        "output/16S_trees/{prefix}_{size}_16S_rooted.newick"
+    conda:
+        "envs/ete3toolkit.yaml"
+    shell:
+        '''
+        python scripts/root-tree.py -t {input}
+        '''
+
+rule generate_input_file:
+    input:
+        treefile="output/16S_trees/{prefix}_{size}_16S_rooted.newick",
+        accession_list="output/accessions/{prefix}_{size}_accessions.txt",
+    output:
+        "output/cactus_input/{prefix}_{size}_input.txt"
+    shell:
+        '''
+        python scripts/generate-cactus-input.py -n {input.treefile} -g {genome_dir} -a {input.accession_list} -o {output}
+        '''
+
+rule progressive_cactus:
+    input:
+        "mnt/output/cactus_input/{prefix}_{size}_input.txt"
+    output:
+        "mnt/output/hals/{prefix}_{size}.hal"
+    params:
+        image_id=config["docker_image"],
+        prefix=config["prefix"] 
+    shell:
+        '''
+        docker run -v $(pwd):/mnt --rm -d {params.image_id} cactus /mnt/{wildcards.size}_jobStore {input} /mnt/{prefix}_{wildcards.size}.hal
+        '''
+
+rule hal2vg:
+    input:
+        "output/hals/{prefix}_{size}.hal"
+    output:
+        "results/{prefix}_{size}.pg"
+    shell:
+        '''
+        hal2vg/hal2vg {input} --inMemory --chop 32 > {output}
+        '''

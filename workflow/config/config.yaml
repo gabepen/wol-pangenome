@@ -1,0 +1,4 @@
+ncbi_dataset: "data/ncbi_dataset.zip"
+prefix: "wol"
+docker_image: "c10e5a66cc4e"
+size_list: "data/pangenome_sizes.txt"

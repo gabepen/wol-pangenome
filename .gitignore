@@ -1,0 +1,5 @@
+workflow/data/
+workflow/hal2vg/
+workflow/output/
+workflow/results/
+workflow/.snakemake

@@ -2,7 +2,7 @@ from ete3 import Tree
 import argparse
 
 
-def binarize_tree(tree_path, node):
+def binarize_tree(tree_path):
     
     """
     Binarizes a tree by resolving polytomies starting from a specified node.
@@ -29,7 +29,7 @@ def binarize_tree(tree_path, node):
     output_path = tree_path.replace('.fa.treefile', '_binarized.newick')
     tree.write(format=2, outfile=output_path)
 
-def root_tree(tree_path, node):
+def root_tree(tree_path):
     
     """
     Roots a tree at a specified node.
@@ -46,14 +46,21 @@ def root_tree(tree_path, node):
 
     """
     tree = Tree(tree_path)
+    # Find the node with the longest branch length
+    max_branch_length = 0
+    max_branch_node = None
+    for node in tree.traverse():
+        if node.dist > max_branch_length:
+            max_branch_length = node.dist
+            max_branch_node = node
 
-    node_to_root = tree.search_nodes(name=node)[0]
+    #node_to_root = tree.search_nodes(name=max_branch_node)[0]
 
     # Root the tree at the target node
-    tree.set_outgroup(node_to_root)
+    tree.set_outgroup(max_branch_node)
 
     # Output the rooted tree to a new newick file
-    output_path = tree_path.replace('.fa.treefile', '_rooted.newick')
+    output_path = tree_path.replace('.treefile', '_rooted.newick')
     tree.write(format=2, outfile=output_path)
 
 def main():
@@ -64,7 +71,7 @@ def main():
     args = parser.parse_args()
 
     #binarize_tree(args.tree_path, args.node_name)
-    root_tree(args.tree_path, args.node_name)
+    root_tree(args.tree_path)
 
 if __name__ == "__main__":
     main()

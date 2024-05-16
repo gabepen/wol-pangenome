@@ -1,6 +1,7 @@
 import argparse
 import json 
 import pprint
+import random
 
 
 def filter_genomes(jsonl_file) -> list:
@@ -50,6 +51,14 @@ def filter_genomes(jsonl_file) -> list:
                 
     return filtered_list
 
+def save_genomes(filtered_list, number_genomes, output_path):
+    
+    # Save the first number of genomes in the filtered list to a tsv file at output path
+    with open(output_path, 'w') as f:   
+        for i in range(number_genomes):
+            strain, accession_ID, taxid = filtered_list[i]
+            f.write(f"{accession_ID}\t{taxid}\t{strain}\n")
+
 def main():
     
     '''Script to parse jsonl file to select accessions for a diverse set of Wolbachia strains
@@ -62,11 +71,14 @@ def main():
     '''
     parser = argparse.ArgumentParser(description='Process JSON file.')
     parser.add_argument('-f', '--file', type=str, help='Path to the JSON file')
+    parser.add_argument('-n', '--number_genomes', type=int, help='Number of genomes to select')
+    parser.add_argument('-o', '--output', type=str, help='Path to the output file')
     args = parser.parse_args()
 
-    filtered_list = filter_genomes(args.file)   
-    for l in filtered_list:
-        print(l[1], l[2], l[0])
-
+    filtered_list = filter_genomes(args.file)  
+    random.shuffle(filtered_list) 
+    
+    save_genomes(filtered_list, args.number_genomes, args.output)
+   
 if __name__ == '__main__':
     main()

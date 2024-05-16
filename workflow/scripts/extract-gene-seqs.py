@@ -80,7 +80,7 @@ def merge_result_files(output_dir, acc_list, batch_prefix):
   with open(acc_list) as f:
     acc_list = [l.strip().split()[0] for l in f.readlines()]
   
-  with open(output_dir + '/' + batch_prefix + '.fasta', 'w') as out_f:
+  with open(output_dir + '/' + batch_prefix + '_16S.fasta', 'w') as out_f:
     for acc_num in acc_list:
       genome_folder = os.path.join(output_dir, acc_num)
       rrna_file = glob(genome_folder + '/*.fna')
@@ -96,7 +96,6 @@ def main():
     '''Script to extract orthologs from a set of genomes
     
         Input: 
-            gff3 directory, an unzipped ncbi-datasets where each folder is an accession of a genome 
             genomic fna directory, an unzipped ncbi-datasets where each folder is an accession of a genome
             
         Output: 
@@ -110,12 +109,13 @@ def main():
     parser.add_argument('-f', '--gffs', type=str, help='Path to the gffs directory')
     parser.add_argument('-i', '--gene_id', type=str, help='Gene ID to extract')
     parser.add_argument('-l', '--acc_list', type=str, help='List of genome accessions to extract')
+    parser.add_argument('-o', '--output', type=str, help='Output directory')
     args = parser.parse_args() 
     
     # create output directory
-    output_dir = '../16S_seqs'
-    if not os.path.exists(output_dir):
-      os.mkdir(output_dir)
+    output_dir = args.output
+    if not os.path.exists(args.output):
+      os.mkdir(args.output)
       
     # extract gene sequences for each genome using gene name 
     '''
@@ -129,10 +129,14 @@ def main():
       input()
      '''
     
+    # select genomes for 16S rRNA extraction based on accession list 
+    genome_accessions = []
+    with open(args.acc_list) as f:
+      for line in f:
+        genome_accessions.append(line.strip().split()[0])
+    
     # extract 16S sequences using barrap
-    for genome in tqdm([g for g in os.listdir(args.genomes) if os.path.isdir(os.path.join(args.genomes, g))]):
-      
-      # get genome accession and file paths 
+    for genome in tqdm(genome_accessions):
       genome_folder = os.path.join(args.genomes, genome)
       fasta_file_path = glob(genome_folder + '/*')
       output_path = output_dir + '/' + genome
@@ -142,17 +146,15 @@ def main():
         if len(glob(output_path + '/*')) == 2:
           continue
 
-  
       # predict 16S rRNA sequence with barrap
       try:
         predict_rrna_seq(fasta_file_path[0], output_path)
       except IndexError:
         print('Error predicting 16S rRNA sequence for genome: ', genome)
-        input()
         continue
       
     # merge all 16S rRNA sequences into a single file
-    batch_prefix = args.acc_list.split('/')[-1].split('.')[0]
+    batch_prefix = '_'.join(args.acc_list.split('/')[-1].split('_')[:2])
     merge_result_files(output_dir, args.acc_list, batch_prefix)
     
 if __name__ == '__main__':
